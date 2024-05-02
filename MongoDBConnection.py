@@ -5,14 +5,18 @@ import pymongo
 from datetime import datetime, timedelta
 import time
 
-DBName = "traffic" #Use this to change which Database we're accessing
-connectionURL = "mongodb+srv://aidanmara:helloWorld@assignment7.oxdb33x.mongodb.net/?retryWrites=true&w=majority&appName=Assignment7" #Put your database URL here
-sensorTable = "traffic data" #Change this to the name of your sensor data table
+DBName = "test" #Use this to change which Database we're accessing
+connectionURL = "mongodb+srv://vinjin000:EIGnqv7iswU8iQNo@cluster0.ak4lnaw.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0" #Put your database URL here
+sensorTable = "Traffic Data" #Change this to the name of your sensor data table
 
+#convert query to an arr
 def QueryToList(query):
-  
-  pass; #TODO: Convert the query that you get in this function to a list and return it
-  #HINT: MongoDB queries are iterable
+    try:
+        arr = list(query) 
+        return arr
+    except Exception as e:
+        print("Error converting query to list:", e)
+        return [] 
 
 def QueryDatabase() -> []:
 	global DBName

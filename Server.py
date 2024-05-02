@@ -48,7 +48,7 @@ def ListenOnTCP(tcpSocket: socket.socket, socketAddress):
     except Exception as e:
         logging.error(f"Error handling connection {socketAddress}: {e}")
     finally:
-        tcp_socket.close()
+        tcpSocket.close()
 
 
     print('incoming data: ' + data); #TODO: Implement TCP Code, use GetServerData to query the database.
@@ -70,6 +70,7 @@ def LaunchTCPThreads():
         connectionThread.start();
 
 if __name__ == "__main__":
+    exitSignal = False
     tcpThread = threading.Thread(target=LaunchTCPThreads);
     tcpThread.start();
 
