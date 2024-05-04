@@ -7,9 +7,12 @@ import errno
 from dataclasses import dataclass
 import random
 import sys
+import json
 
 maxPacketSize = 1024
-defaultPort = 2424 
+defaultPort = 24250
+
+exitSignal = False
 
 def GetFreePort(minPort: int = 1024, maxPort: int = 65535):
     for i in range(minPort, maxPort):
@@ -31,10 +34,6 @@ def GetServerData() -> []:
     return mongo.QueryDatabase();
 
 
-
-
-
-
 def ListenOnTCP(tcpSocket: socket.socket, socketAddress):
     import logging
 
@@ -43,12 +42,13 @@ def ListenOnTCP(tcpSocket: socket.socket, socketAddress):
 
         trafficData = GetServerData()
 
-        
+        trafficDataJson = json.dumps(trafficData)
+        tcpSocket.sendall(trafficDataJson.encode('utf-8'))
 
     except Exception as e:
         logging.error(f"Error handling connection {socketAddress}: {e}")
     finally:
-        tcp_socket.close()
+        tcpSocket.close()
 
 
     print('incoming data: ' + data); #TODO: Implement TCP Code, use GetServerData to query the database.

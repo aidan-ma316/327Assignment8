@@ -2,16 +2,27 @@ from pymongo import MongoClient, database
 import subprocess
 import threading
 import pymongo
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import time
 
-DBName = "traffic" #Use this to change which Database we're accessing
+DBName = "test" #Use this to change which Database we're accessing
 connectionURL = "mongodb+srv://aidanmara:helloWorld@assignment7.oxdb33x.mongodb.net/?retryWrites=true&w=majority&appName=Assignment7" #Put your database URL here
 sensorTable = "traffic data" #Change this to the name of your sensor data table
 
 def QueryToList(query):
-  
-  pass; #TODO: Convert the query that you get in this function to a list and return it
+	l = []
+
+	for item in query:
+
+		device_asset_uid = item['payload']['device_asset_uid']
+
+		last_key = list(item['payload'].keys())[-1]
+
+		last_item = item['payload'][last_key]
+
+		l.append([device_asset_uid, last_item])
+
+	return l; #TODO: Convert the query that you get in this function to a list and return it
   #HINT: MongoDB queries are iterable
 
 def QueryDatabase() -> []:
@@ -24,44 +35,79 @@ def QueryDatabase() -> []:
 	cluster = None
 	client = None
 	db = None
+	
 	try:
 		cluster = connectionURL
 		client = MongoClient(cluster)
 		db = client[DBName]
+
 		print("Database collections: ", db.list_collection_names())
 
 		#We first ask the user which collection they'd like to draw from.
 		sensorTable = db[sensorTable]
 		print("Table:", sensorTable)
 
+		timeNow = datetime.now(timezone.utc)
+		print("Current UTC Time:", timeNow)
+
 		#We convert the cursor that mongo gives us to a list for easier iteration.
-		timeCutOff = datetime.now() - timedelta(minutes=5)
+		timeCutOff = timeNow - timedelta(minutes=5)
 
-		oldDocuments = QueryToList(sensorTable.find({"time":{"$gte":timeCutOff}}))
-		currentDocuments = QueryToList(sensorTable.find({"time":{"$lte":timeCutOff}}))
+		queryNew = {
+			"time":{"$gte":timeCutOff}
+		}
 
+		queryOld = {
+			"time":{"$lte":timeCutOff}
+		}
+
+		projection ={
+			"_id":0,
+			"payload":1,
+			"time" : 1
+		}
+
+		#for item in sensorTable.find(queryOld, projection): print(item)
+
+		oldDocuments = QueryToList(sensorTable.find(queryOld, projection).limit(10))
+
+		currentDocuments = QueryToList(sensorTable.find(queryNew, projection))
 
 		print("Current Docs:",currentDocuments)
 		print("Old Docs:",oldDocuments)
 
-		sensorTable = {}
+		highways = {}
 
-		for item in currentDocuments:
-			currSense = 0
+		for item in oldDocuments:
 
-			for i2 in item.payload:
-				if type(i2) == int:
-					i2 = currSense
+			newProjection = {'_id': 0, 'latitude': 1, 'longitude': 1, 'eventTypes':1}
 
-			sensorTable[item.payload.device_asset_uid].update(list(sensorTable[item.payload.device_asset_uid]).append(i2))
+			metaTable = db['traffic data_metadata']
 
-		for key in sensorTable.keys():
-			size = len(sensorTable[key])
-			sensorTable[key].update(sum(sensorTable[key])/size)
+			currLocation = metaTable.find_one({'assetUid': item[0]}, newProjection)
 
-		sortedKeys = list(sorted(sensorTable, key=lambda k: sensorTable[k]))
+			if currLocation:
+				hName = currLocation['eventTypes'][0][0]['boards'][0]['name']
+				hName = hName.replace(' Device Board','')
 
-		return sortedKeys
+				latitude = currLocation.get('latitude', 0)
+				longitude = currLocation.get('longitude', 0)
+
+				if (latitude, longitude) in highways:
+					highways[(latitude, longitude)] = [highways[(latitude, longitude)][0]+item[1], highways[(latitude, longitude)][1]+1, hName]
+				else:
+					highways[(latitude, longitude)] = [item[1],1]
+
+		output = []
+
+		for key in highways.keys():
+			output.append([highways[key][0]/highways[key][1], hName])
+
+		sortedOut = sorted(output, key=lambda item: item[0])
+
+		print(sortedOut)
+		return sortedOut
+
 
 
 	except Exception as e:
@@ -69,3 +115,4 @@ def QueryDatabase() -> []:
 		print("Error:",e)
 		exit(0)
 
+#QueryDatabase()

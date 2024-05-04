@@ -4,6 +4,7 @@ import threading
 import time
 import contextlib
 import errno
+import json
 
 maxPacketSize = 1024
 defaultPort = 2424 
@@ -27,10 +28,19 @@ while clientMessage != "exit":
     tcpSocket.send(bytearray(str(clientMessage), encoding='utf-8'))
     data = tcpSocket.recv(1024)
 
-    best_highway = "";
+    d_data = data.decode("utf-8")
 
-    print('The best highway to take is', best_highway);
-    #TODO: Print the best highway to take
+    data_list = json.loads(d_data)
+
+    print(data)
+
+    best_highway = data[0][1];
+
+    print('The best highway to take is', best_highway, ' with a traffic score of', data[0][0], '\n');
+    
+    for h,i in data[1:]:
+        print(best_highway)
+
     
 tcpSocket.close();
 
