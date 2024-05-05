@@ -22,24 +22,37 @@ if tcpPort == 0:
 tcpSocket.connect((serverIP, tcpPort));
 
 clientMessage = "";
+
 while clientMessage != "exit":
     clientMessage = input("Please type the message that you'd like to send (Or type \"exit\" to exit):\n>");
 
     tcpSocket.send(bytearray(str(clientMessage), encoding='utf-8'))
     data = tcpSocket.recv(1024)
 
-    d_data = data.decode("utf-8")
+    d_data = data.decode("utf-8").strip('[]').split(',')
 
-    data_list = json.loads(d_data)
-
-    print(data)
-
-    best_highway = data[0][1];
-
-    print('The best highway to take is', best_highway, ' with a traffic score of', data[0][0], '\n');
+    if data == '':
+        print('Not enough data, try again later.')
+        tcpSocket.close();
     
-    for h,i in data[1:]:
-        print(best_highway)
+    #print(d_data)
+    #now its a list
+
+    best_highway = d_data[0].strip("'");
+    best_highway_score = d_data[1];
+
+    print(f'1. The best freeway to take is {best_highway} with a traffic score of: {best_highway_score}\n')
+
+
+    print('Rankings:')
+    i = 0
+    j = 1
+    while i < len(d_data) and i < 10:
+        print(f'{j}. {d_data[i].strip(" '")}: {d_data[i+1]}')
+        j += 1
+        i += 2
+
+    print()
 
     
 tcpSocket.close();

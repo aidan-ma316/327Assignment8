@@ -22,8 +22,7 @@ def QueryToList(query):
 
 		l.append([device_asset_uid, last_item])
 
-	return l; #TODO: Convert the query that you get in this function to a list and return it
-  #HINT: MongoDB queries are iterable
+	return l;
 
 def QueryDatabase() -> []:
 	global DBName
@@ -48,7 +47,7 @@ def QueryDatabase() -> []:
 		print("Table:", sensorTable)
 
 		timeNow = datetime.now(timezone.utc)
-		print("Current UTC Time:", timeNow)
+		print("\nCurrent UTC Time:", timeNow)
 
 		#We convert the cursor that mongo gives us to a list for easier iteration.
 		timeCutOff = timeNow - timedelta(minutes=5)
@@ -69,16 +68,17 @@ def QueryDatabase() -> []:
 
 		#for item in sensorTable.find(queryOld, projection): print(item)
 
-		oldDocuments = QueryToList(sensorTable.find(queryOld, projection).limit(10))
+		oldDocuments = QueryToList(sensorTable.find(queryOld, projection))
 
 		currentDocuments = QueryToList(sensorTable.find(queryNew, projection))
 
-		print("Current Docs:",currentDocuments)
-		print("Old Docs:",oldDocuments)
+		print("Current Docs:", len(currentDocuments))
+		print("Old Docs:", len(oldDocuments))
+
 
 		highways = {}
 
-		for item in oldDocuments:
+		for item in currentDocuments:
 
 			newProjection = {'_id': 0, 'latitude': 1, 'longitude': 1, 'eventTypes':1}
 
@@ -90,29 +90,39 @@ def QueryDatabase() -> []:
 				hName = currLocation['eventTypes'][0][0]['boards'][0]['name']
 				hName = hName.replace(' Device Board','')
 
+				#print(highways)
+
 				latitude = currLocation.get('latitude', 0)
 				longitude = currLocation.get('longitude', 0)
 
 				if (latitude, longitude) in highways:
 					highways[(latitude, longitude)] = [highways[(latitude, longitude)][0]+item[1], highways[(latitude, longitude)][1]+1, hName]
 				else:
-					highways[(latitude, longitude)] = [item[1],1]
+					highways[(latitude, longitude)] = [item[1],1,hName]
+
+			currLocation = None
+
+
+		sortList = []
+
+		for key in highways.keys():
+			sortList.append([highways[key][0]/highways[key][1],highways[key][2]])
+
+		sortList = sorted(sortList, key=lambda item: item[0])
 
 		output = []
 
-		for key in highways.keys():
-			output.append([highways[key][0]/highways[key][1], hName])
+		for pair in sortList:
+			output.append(pair[1])
+			output.append(pair[0])
 
-		sortedOut = sorted(output, key=lambda item: item[0])
-
-		print(sortedOut)
-		return sortedOut
-
-
+		return output
 
 	except Exception as e:
 		print("Please make sure that this machine's IP has access to MongoDB.")
 		print("Error:",e)
 		exit(0)
 
-#QueryDatabase()
+	finally:
+		if client:
+			client.close()

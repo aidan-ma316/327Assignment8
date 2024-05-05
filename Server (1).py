@@ -10,7 +10,7 @@ import sys
 import json
 
 maxPacketSize = 1024
-defaultPort = 24250
+defaultPort = 24251
 
 exitSignal = False
 
@@ -38,20 +38,22 @@ def ListenOnTCP(tcpSocket: socket.socket, socketAddress):
     import logging
 
     try:
-        data = str(tcpSocket.recv(1024).decode('utf-8'))
+        while True:
+            data = tcpSocket.recv(1024).decode('utf-8')
+            if data:
+                if data == 'exit':
+                    break 
 
-        trafficData = GetServerData()
+                traffic_data = str(GetServerData())
 
-        trafficDataJson = json.dumps(trafficData)
-        tcpSocket.sendall(trafficDataJson.encode('utf-8'))
+                print(traffic_data)  
+                tcpSocket.sendall(traffic_data.encode('utf-8'))
+
 
     except Exception as e:
         logging.error(f"Error handling connection {socketAddress}: {e}")
     finally:
         tcpSocket.close()
-
-
-    print('incoming data: ' + data); #TODO: Implement TCP Code, use GetServerData to query the database.
 
 
 def CreateTCPSocket() -> socket.socket:
