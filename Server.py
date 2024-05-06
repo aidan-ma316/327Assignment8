@@ -41,12 +41,12 @@ def ListenOnTCP(tcpSocket: socket.socket, socketAddress):
     try:
         while True:
             data = tcpSocket.recv(1024).decode('utf-8') 
-            if not data:  
+            if not data:
                 break
-            if data == "exit":
+            if data.lower() == "leave":  
                 print("Server ended")
                 break
-            if data:
+            else:
                 traffic_data = str(GetServerData())
                 print(traffic_data)  
                 tcpSocket.sendall(traffic_data.encode('utf-8'))
