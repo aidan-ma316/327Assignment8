@@ -1,3 +1,4 @@
+
 import socket
 import ipaddress
 import threading
@@ -7,9 +8,12 @@ import errno
 from dataclasses import dataclass
 import random
 import sys
+import json
 
 maxPacketSize = 1024
-defaultPort = 2424 
+defaultPort = 24251
+
+exitSignal = False
 
 def GetFreePort(minPort: int = 1024, maxPort: int = 65535):
     for i in range(minPort, maxPort):
@@ -31,27 +35,26 @@ def GetServerData() -> []:
     return mongo.QueryDatabase();
 
 
-
-
-
-
 def ListenOnTCP(tcpSocket: socket.socket, socketAddress):
     import logging
 
     try:
-        data = str(tcpSocket.recv(1024).decode('utf-8'))
-
-        trafficData = GetServerData()
-
-        
+        while True:
+            data = tcpSocket.recv(1024).decode('utf-8') 
+            if not data:  
+                break
+            if data == "exit":
+                print("Server ended")
+                break
+            if data:
+                traffic_data = str(GetServerData())
+                print(traffic_data)  
+                tcpSocket.sendall(traffic_data.encode('utf-8'))
 
     except Exception as e:
         logging.error(f"Error handling connection {socketAddress}: {e}")
     finally:
         tcpSocket.close()
-
-
-    print('incoming data: ' + data); #TODO: Implement TCP Code, use GetServerData to query the database.
 
 
 def CreateTCPSocket() -> socket.socket:
@@ -70,7 +73,6 @@ def LaunchTCPThreads():
         connectionThread.start();
 
 if __name__ == "__main__":
-    exitSignal = False
     tcpThread = threading.Thread(target=LaunchTCPThreads);
     tcpThread.start();
 
