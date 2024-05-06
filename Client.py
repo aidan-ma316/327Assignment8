@@ -24,19 +24,20 @@ tcpSocket.connect((serverIP, tcpPort));
 clientMessage = "";
 
 while clientMessage != "exit":
-    clientMessage = input("Please type the message that you'd like to send (Or type \"exit\" to exit):\n>");
+    clientMessage = input("Please type the message that you'd like to send (Or type \"leave\" to exit):\n>");
 
     tcpSocket.send(bytearray(str(clientMessage), encoding='utf-8'))
     data = tcpSocket.recv(1024)
     
-    if data == b'exit':
+    if data.decode().lower() == b'leave':
         break
 
     if data == b'':
-        print('Session ended')
+        print("Session Ended")
         break
-        
+
     d_data = data.decode("utf-8").strip('[]').split(',')
+
     
     #print(d_data)
     #now its a list
