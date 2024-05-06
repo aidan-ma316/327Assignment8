@@ -28,9 +28,6 @@ while clientMessage != "exit":
 
     tcpSocket.send(bytearray(str(clientMessage), encoding='utf-8'))
     data = tcpSocket.recv(1024)
-    
-    if data.decode().lower() == b'leave':
-        break
 
     if data == b'':
         print("Session Ended")
