@@ -41,8 +41,6 @@ def ListenOnTCP(tcpSocket: socket.socket, socketAddress):
     try:
         while True:
             data = tcpSocket.recv(1024).decode('utf-8') 
-            if not data:
-                break
             if data.lower() == "leave":  
                 print("Server ended")
                 break
