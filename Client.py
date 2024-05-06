@@ -4,6 +4,7 @@ import threading
 import time
 import contextlib
 import errno
+import json
 
 maxPacketSize = 1024
 defaultPort = 2424 
@@ -21,16 +22,41 @@ if tcpPort == 0:
 tcpSocket.connect((serverIP, tcpPort));
 
 clientMessage = "";
+
 while clientMessage != "exit":
     clientMessage = input("Please type the message that you'd like to send (Or type \"exit\" to exit):\n>");
 
     tcpSocket.send(bytearray(str(clientMessage), encoding='utf-8'))
     data = tcpSocket.recv(1024)
+    
+    if data == b'exit':
+        break
 
-    best_highway = "";
+    d_data = data.decode("utf-8").strip('[]').split(',')
 
-    print('The best highway to take is', best_highway);
-    #TODO: Print the best highway to take
+    if data == b'':
+        print('Session ended')
+        break
+    
+    #print(d_data)
+    #now its a list
+
+    best_highway = d_data[0].strip("'");
+    best_highway_score = d_data[1];
+
+    print(f'1. The best freeway to take is {best_highway} with a traffic score of: {best_highway_score}\n')
+
+
+    print('Rankings:')
+    i = 0
+    j = 1
+    while i < len(d_data) and i < 10:
+        # print(f'{j}. {d_data[i].strip("'")}: {d_data[i+1]}')
+        print(f'{j}. {(d_data[i])}: {d_data[i+1]}')
+        j += 1
+        i += 2
+
+    print()
+    
     
 tcpSocket.close();
-
