@@ -32,11 +32,11 @@ while clientMessage != "exit":
     if data == b'exit':
         break
 
-    d_data = data.decode("utf-8").strip('[]').split(',')
-
     if data == b'':
         print('Session ended')
         break
+        
+    d_data = data.decode("utf-8").strip('[]').split(',')
     
     #print(d_data)
     #now its a list
