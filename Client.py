@@ -9,7 +9,7 @@ import json
 maxPacketSize = 1024
 defaultPort = 2424 
 #localhost testing
-serverIP = '127.0.0.1'
+serverIP = input("Enter server ip address: ")
 #serverIP = '***.***.***.***' #TODO: Change this to your instance IP
 
 tcpSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM);
@@ -34,7 +34,6 @@ while clientMessage != "exit":
         break
 
     d_data = data.decode("utf-8").strip('[]').split(',')
-
     
     #print(d_data)
     #now its a list
