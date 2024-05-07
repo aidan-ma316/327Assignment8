@@ -1,79 +1,59 @@
-
 import socket
 import ipaddress
 import threading
 import time
 import contextlib
 import errno
-from dataclasses import dataclass
-import random
-import sys
 import json
 
 maxPacketSize = 1024
-defaultPort = 24251
+defaultPort = 2424 
+#localhost testing
+serverIP = input("Enter server ip address: ")
+#serverIP = '***.***.***.***' #TODO: Change this to your instance IP
 
-exitSignal = False
+tcpSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM);
+try:
+    tcpPort = int(input("Please enter the TCP port of the host..."));
+except:
+    tcpPort = 0;
+if tcpPort == 0:
+    tcpPort = defaultPort;
+tcpSocket.connect((serverIP, tcpPort));
 
-def GetFreePort(minPort: int = 1024, maxPort: int = 65535):
-    for i in range(minPort, maxPort):
-        print("Testing port",i);
-        with contextlib.closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as potentialPort:
-            try:
-                potentialPort.bind(('localhost', i));
-                potentialPort.close();
-                print("Server listening on port",i);
-                return i
-            except socket.error as e:
-                if e.errno == errno.EADDRINUSE:
-                    print("Port",i,"already in use. Checking next...");
-                else:
-                    print("An exotic error occurred:",e);
+clientMessage = "";
 
-def GetServerData() -> []:
-    import MongoDBConnection as mongo
-    return mongo.QueryDatabase();
+while clientMessage != "exit":
+    clientMessage = input("Please type the message that you'd like to send (Or type \"leave\" to exit):\n>");
 
+    tcpSocket.send(bytearray(str(clientMessage), encoding='utf-8'))
+    data = tcpSocket.recv(1024)
 
-def ListenOnTCP(tcpSocket: socket.socket, socketAddress):
-    import logging
+    if data == b'':
+        print("Session Ended")
+        break
 
-    try:
-        while True:
-            data = tcpSocket.recv(1024).decode('utf-8') 
-            if data.lower() == "leave":  
-                print("Server ended")
-                break
-            else:
-                traffic_data = str(GetServerData())
-                print(traffic_data)  
-                tcpSocket.sendall(traffic_data.encode('utf-8'))
+    d_data = data.decode("utf-8").strip('[]').split(',')
+    
+    #print(d_data)
+    #now its a list
 
-    except Exception as e:
-        logging.error(f"Error handling connection {socketAddress}: {e}")
-    finally:
-        tcpSocket.close()
+    best_highway = d_data[0].strip("'");
+    best_highway_score = d_data[1];
+
+    print(f'1. The best freeway to take is {best_highway} with a traffic score of: {best_highway_score}\n')
 
 
-def CreateTCPSocket() -> socket.socket:
-    tcpSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM);
-    tcpPort = defaultPort
-    print("TCP Port:",tcpPort);
-    tcpSocket.bind(('localhost', tcpPort));
-    return tcpSocket;
+    print('Rankings:')
+    i = 0
+    j = 1
+    while i < len(d_data) and i < 10:
+        # print(f'{j}. {d_data[i].strip("'")}: {d_data[i+1]}')
+        print(f'{j}. {(d_data[i])}: {d_data[i+1]}')
+        j += 1
+        i += 2
 
-def LaunchTCPThreads():
-    tcpSocket = CreateTCPSocket();
-    tcpSocket.listen(5);
-    while True:
-        connectionSocket, connectionAddress = tcpSocket.accept();
-        connectionThread = threading.Thread(target=ListenOnTCP, args=[connectionSocket, connectionAddress]);
-        connectionThread.start();
-
-if __name__ == "__main__":
-    tcpThread = threading.Thread(target=LaunchTCPThreads);
-    tcpThread.start();
-
-    while not exitSignal:
-        time.sleep(1);
-    print("Ending program by exit signal...");
+    print()
+    
+    
+tcpSocket.close();
