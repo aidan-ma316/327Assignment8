@@ -1,5 +1,6 @@
 # IoT | Traffic System Simulator
 
+##Aidan Mara and Alvin Jin
 
 ## Vision
 
